@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --blue: #378ADD;
+            --red: #E24B4A;
+            --amber: #EF9F27;
+            --green: #639922;
+            --surface: #fff;
+            --bg: #f5f5f3;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-secondary: #6b6b68;
+            --radius-lg: 14px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #1a1a18;
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem;
+            animation: fadeDown 0.45s ease both;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Stat cards ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            animation: fadeUp 0.45s ease both;
+        }
+
+        .stat-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .stat-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .stat-value.danger {
+            color: var(--red);
+        }
+
+        .stat-value.success {
+            color: var(--green);
+        }
+
+        /* ── Main card ── */
+        .main-card {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            animation: fadeUp 0.45s ease 0.25s both;
+            margin-bottom: 1.5rem;
+        }
+
+        .main-card-header {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 0.5px solid var(--border);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .main-card-header .subtitle {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        /* ── Table ── */
+        .att-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .att-table th {
+            padding: 10px 1.25rem;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .att-table td {
+            padding: 13px 1.25rem;
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .att-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .att-table tbody tr {
+            transition: background 0.15s;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .att-table tbody tr:nth-child(1) {
+            animation-delay: 0.3s;
+        }
+
+        .att-table tbody tr:nth-child(2) {
+            animation-delay: 0.35s;
+        }
+
+        .att-table tbody tr:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .att-table tbody tr:nth-child(4) {
+            animation-delay: 0.45s;
+        }
+
+        .att-table tbody tr:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .att-table tbody tr:nth-child(n+6) {
+            animation-delay: 0.55s;
+        }
+
+        .att-table tbody tr:hover td {
+            background: #fafaf8;
+        }
+
+        /* ── Avatar ── */
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e6f1fb;
+            color: #185fa5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Progress bar ── */
+        .bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 6px;
+            background: #f0eeea;
+            border-radius: 99px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: var(--blue);
+            width: 0%;
+            transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-fill.low {
+            background: var(--red);
+        }
+
+        .bar-fill.mid {
+            background: var(--amber);
+        }
+
+        .bar-pct {
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 38px;
+            text-align: right;
+        }
+
+        /* ── Badges ── */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-status.excellent {
+            background: #eaf3de;
+            color: #3b6d11;
+        }
+
+        .badge-status.good {
+            background: #faeeda;
+            color: #854f0b;
+        }
+
+        .badge-status.at-risk {
+            background: #fcebeb;
+            color: #a32d2d;
+        }
+
+        /* ── Chart card ── */
+        .chart-card {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            animation: fadeUp 0.45s ease 0.4s both;
+        }
+
+        .chart-card-header {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── Nav link ── */
+        .nav-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            color: inherit;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .nav-link-btn:hover {
+            background: #f5f5f3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" style="max-width: 900px; padding-bottom: 3rem;">
+
+        <!-- Page header -->
+        <div class="page-header">
+            <h1>Attendance Dashboard</h1>
+            <p>Live overview of student attendance records</p>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total students</div>
+                <div class="stat-value">{{ report|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg attendance</div>
+                <div class="stat-value success" id="avg-pct">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Below 75%</div>
+                <div class="stat-value danger" id="at-risk-count">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Full attendance</div>
+                <div class="stat-value" id="full-count">—</div>
+            </div>
+        </div>
+
+        <!-- Student table -->
+        <div class="main-card">
+            <div class="main-card-header">
+                Student records
+                <span class="subtitle">{{ report|length }} students</span>
+            </div>
+            <table class="att-table">
+                <thead>
+                    <tr>
+                        <th style="width:34%">Name</th>
+                        <th>Days present</th>
+                        <th style="width:36%">Attendance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in report %}
+                    <tr>
+                        <td>
+                            <div class="name-cell">
+                                <div class="avatar">{{ student.name|slice:":1"|upper }}{{ student.name|cut:" "|slice:"1:2"|upper }}</div>
+                                {{ student.name }}
+                            </div>
+                        </td>
+                        <td style="color:#6b6b68">{{ student.present }} / {{ student.total }}</td>
+                        <td>
+                            <div class="bar-wrap">
+                                <div class="bar-track">
+                                    <div class="bar-fill {% if student.percentage < 75 %}low{% elif student.percentage < 85 %}mid{% endif %}"
+                                        data-pct="{{ student.percentage }}"></div>
+                                </div>
+                                <span class="bar-pct">{{ student.percentage }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if student.percentage >= 90 %}
+                            <span class="badge-status excellent">Excellent</span>
+                            {% elif student.percentage >= 75 %}
+                            <span class="badge-status good">Good</span>
+                            {% else %}
+                            <span class="badge-status at-risk">At risk</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; color:#6b6b68; padding: 2rem;">
+                            No attendance records found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-card">
+            <div class="chart-card-header">Attendance by student</div>
+            <canvas id="chart" height="100"></canvas>
+        </div>
+
+        <!-- Back button -->
+        <div style="text-align:center; margin-top:1.5rem;">
+            <a href="/" class="nav-link-btn">← Back to attendance</a>
+        </div>
+
+    </div>
+
+    <script>
+        /* ── Animate progress bars after paint ── */
+        setTimeout(() => {
+            document.querySelectorAll(".bar-fill").forEach(el => {
+                el.style.width = el.dataset.pct + "%";
+            });
+        }, 120);
+
+        /* ── Compute summary stats from template data ── */
+        let names = [], percentages = [];
+        try {
+            names = JSON.parse('{{ names|default:"[]"|escapejs }}');
+            percentages = JSON.parse('{{ percentages|default:"[]"|escapejs }}');
+        } catch (e) {
+            names = []; percentages = [];
+        }
+
+        if (percentages.length) {
+            const avg = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
+            const atRisk = percentages.filter(p => p < 75).length;
+            const full = percentages.filter(p => p === 100).length;
+            document.getElementById("avg-pct").textContent = avg + "%";
+            document.getElementById("at-risk-count").textContent = atRisk;
+            document.getElementById("full-count").textContent = full;
+        }
+
+        /* ── Chart ── */
+        const colors = percentages.map(p =>
+            p < 75 ? "#E24B4A" : p < 85 ? "#EF9F27" : "#378ADD"
+        );
+
+        new Chart(document.getElementById("chart"), {
+            type: "bar",
+            data: {
+                labels: names,
+                datasets: [{
+                    label: "Attendance %",
+                    data: percentages,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                animation: { duration: 900, easing: "easeInOutQuart" },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => " " + ctx.parsed.y + "%"
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 12 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: v => v + "%",
+                            font: { size: 12 }
+                        },
+                        grid: { color: "rgba(0,0,0,0.05)" }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

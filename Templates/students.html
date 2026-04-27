@@ -1,7 +1,536 @@
-<h1>Students</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-<ul>
-    {% for student in students %}
-    <li>{{ student.name }} - {{ student.class_name }}</li>
-    {% endfor %}
-</ul>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #378ADD;
+            --surface: #fff;
+            --bg: #f5f5f3;
+            --border: rgba(0, 0, 0, 0.1);
+            --text-secondary: #6b6b68;
+            --radius-lg: 14px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #1a1a18;
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem;
+            animation: fadeDown 0.45s ease both;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            animation: fadeUp 0.45s ease 0.1s both;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .action-btn:hover {
+            background: #ededeb;
+        }
+
+        .counter {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .counter span {
+            font-weight: 600;
+            color: #1a1a18;
+        }
+
+        /* ── Search ── */
+        .search-wrap {
+            position: relative;
+            animation: fadeUp 0.45s ease 0.15s both;
+            margin-bottom: 1rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .search-input:focus {
+            border-color: rgba(55, 138, 221, 0.5);
+            box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+        }
+
+        /* ── Card ── */
+        .main-card {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            animation: fadeUp 0.45s ease 0.2s both;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-head {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 0.5px solid var(--border);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* ── Table ── */
+        .att-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .att-table th {
+            padding: 10px 1.25rem;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .att-table td {
+            padding: 13px 1.25rem;
+            border-bottom: 0.5px solid var(--border);
+            transition: background 0.12s;
+        }
+
+        .att-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .att-table tbody tr {
+            cursor: pointer;
+            animation: fadeUp 0.35s ease both;
+        }
+
+        .att-table tbody tr:nth-child(1) {
+            animation-delay: 0.25s;
+        }
+
+        .att-table tbody tr:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .att-table tbody tr:nth-child(3) {
+            animation-delay: 0.35s;
+        }
+
+        .att-table tbody tr:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .att-table tbody tr:nth-child(5) {
+            animation-delay: 0.45s;
+        }
+
+        .att-table tbody tr:nth-child(n+6) {
+            animation-delay: 0.5s;
+        }
+
+        .att-table tbody tr:hover td {
+            background: #fafaf8;
+        }
+
+        .att-table tbody tr.is-present td {
+            background: #f2f9ea;
+        }
+
+        .att-table tbody tr.is-present:hover td {
+            background: #eaf5de;
+        }
+
+        /* ── Avatar ── */
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e6f1fb;
+            color: #185fa5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .is-present .avatar {
+            background: #eaf3de;
+            color: #3b6d11;
+        }
+
+        .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Custom checkbox ── */
+        .check-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .check-wrap input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--blue);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* ── Status badge ── */
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .status-dot .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #d3d1c7;
+            transition: background 0.2s;
+        }
+
+        .is-present .status-dot {
+            color: #3b6d11;
+        }
+
+        .is-present .status-dot .dot {
+            background: #639922;
+        }
+
+        /* ── Footer bar ── */
+        .footer-bar {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            animation: fadeUp 0.45s ease 0.35s both;
+        }
+
+        .footer-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Buttons ── */
+        .btn-save {
+            padding: 9px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--blue);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        .btn-save:hover {
+            background: #2a7acf;
+        }
+
+        .btn-save:active {
+            transform: scale(0.97);
+        }
+
+        .btn-report {
+            padding: 9px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            background: transparent;
+            color: #1a1a18;
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+            display: inline-block;
+        }
+
+        .btn-report:hover {
+            background: #ededeb;
+            color: #1a1a18;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" style="max-width: 760px; padding-bottom: 3rem;">
+
+        <!-- Page header -->
+        <div class="page-header">
+            <h1>Mark Attendance</h1>
+            <p>Select present students and save attendance for the chosen date</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div style="font-size: 14px; font-weight: 500; padding: 12px 16px; border-radius: 8px; background: {% if message.tags == 'error' or message.tags == 'warning' %}#fcebeb{% else %}#eaf3de{% endif %}; color: {% if message.tags == 'error' or message.tags == 'warning' %}#a32d2d{% else %}#3b6d11{% endif %}; margin-bottom: 8px;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Add Student Form -->
+        <div class="main-card add-student-card" style="padding: 1.25rem; margin-bottom: 1.5rem; animation: fadeUp 0.45s ease 0.05s both;">
+            <form method="POST" action="{% url 'add_student' %}" class="d-flex gap-2 align-items-center mb-0">
+                {% csrf_token %}
+                <input type="text" name="name" class="search-input" placeholder="Enter student name..." required style="flex: 1; margin: 0; padding-left: 14px;">
+                <button type="submit" class="btn-save" style="white-space: nowrap;">Add Student</button>
+            </form>
+        </div>
+
+        <form method="POST" id="att-form">
+            {% csrf_token %}
+
+            <!-- Toolbar -->
+            <div class="toolbar" style="justify-content: flex-start; gap: 15px;">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="att-date" style="font-size: 14px; font-weight: 500;">Date:</label>
+                    <input type="date" name="date" id="att-date" class="search-input" value="{{ today }}" style="padding: 6px 14px; margin: 0; width: 140px; font-size: 14px;">
+                </div>
+                <div class="quick-actions">
+                    <button type="button" class="action-btn" onclick="markAll(true)">Mark all present</button>
+                    <button type="button" class="action-btn" onclick="markAll(false)">Clear all</button>
+                </div>
+                <div class="counter" style="margin-left: auto;">
+                    <span id="present-count">0</span> of {{ students|length }} present
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" class="search-input" id="search" placeholder="Search students…" autocomplete="off">
+            </div>
+
+            <!-- Table -->
+            <div class="main-card">
+                <div class="card-head">Students</div>
+                <table class="att-table">
+                    <thead>
+                        <tr>
+                            <th style="width:55%">Name</th>
+                            <th style="text-align:center; width:20%">Present</th>
+                            <th style="width:25%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-tbody">
+                        {% for student in students %}
+                        <tr data-name="{{ student.name|lower }}" onclick="toggleRow(this)">
+                            <td>
+                                <div class="name-cell">
+                                    <div class="avatar">{{ student.name|slice:":1"|upper }}</div>
+                                    {{ student.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="check-wrap">
+                                    <input type="checkbox" name="{{ student.id }}" onclick="event.stopPropagation();"
+                                        onchange="onCheckChange(this)">
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-dot">
+                                    <span class="dot"></span>
+                                    <span class="status-text">Absent</span>
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-state">No students found. Add students to get started.</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-bar">
+                <span class="footer-info" id="footer-info">No students marked yet</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <a href="/report/" class="btn-report">View dashboard →</a>
+                    <button type="submit" name="action" value="reset" class="action-btn" style="color: var(--red); border-color: rgba(226,75,74,0.3);" onclick="return confirm('Are you sure you want to reset attendance for this date?');">Reset Attendance</button>
+                    <button type="submit" name="action" value="save" class="btn-save">Save attendance</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        function updateCounter() {
+            const total = document.querySelectorAll("#student-tbody tr[data-name]").length;
+            const checked = document.querySelectorAll("#student-tbody input[type=checkbox]:checked").length;
+            document.getElementById("present-count").textContent = checked;
+            const info = document.getElementById("footer-info");
+            if (checked === 0) info.textContent = "No students marked yet";
+            else if (checked === total) info.textContent = "All " + total + " students marked present";
+            else info.textContent = checked + " of " + total + " marked present";
+        }
+
+        function setRowPresent(row, present) {
+            const cb = row.querySelector("input[type=checkbox]");
+            const label = row.querySelector(".status-text");
+            cb.checked = present;
+            if (present) {
+                row.classList.add("is-present");
+                label.textContent = "Present";
+            } else {
+                row.classList.remove("is-present");
+                label.textContent = "Absent";
+            }
+        }
+
+        function toggleRow(row) {
+            const cb = row.querySelector("input[type=checkbox]");
+            setRowPresent(row, !cb.checked);
+            updateCounter();
+        }
+
+        function onCheckChange(cb) {
+            setRowPresent(cb.closest("tr"), cb.checked);
+            updateCounter();
+        }
+
+        function markAll(state) {
+            document.querySelectorAll("#student-tbody tr[data-name]").forEach(row => {
+                setRowPresent(row, state);
+            });
+            updateCounter();
+        }
+
+        /* ── Search ── */
+        document.getElementById("search").addEventListener("input", function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll("#student-tbody tr[data-name]").forEach(row => {
+                row.style.display = row.dataset.name.includes(q) ? "" : "none";
+            });
+        });
+
+        updateCounter();
+    </script>
+</body>
+
+</html>
