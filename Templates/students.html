@@ -428,9 +428,10 @@
                 <table class="att-table">
                     <thead>
                         <tr>
-                            <th style="width:55%">Name</th>
+                            <th style="width:45%">Name</th>
                             <th style="text-align:center; width:20%">Present</th>
                             <th style="width:25%">Status</th>
+                            <th style="width:10%"></th>
                         </tr>
                     </thead>
                     <tbody id="student-tbody">
@@ -454,10 +455,13 @@
                                     <span class="status-text">Absent</span>
                                 </span>
                             </td>
+                            <td style="text-align:right;">
+                                <a href="{% url 'delete_student' student.id %}" onclick="event.stopPropagation(); return confirm('Delete student {{ student.name }}? All their attendance will be permanently removed.');" style="color: var(--text-secondary); text-decoration: none; font-size: 16px; padding: 4px; border-radius: 4px;" onmouseover="this.style.color='var(--red)'; this.style.background='#fcebeb';" onmouseout="this.style.color='var(--text-secondary)'; this.style.background='transparent';">✕</a>
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3">
+                            <td colspan="4">
                                 <div class="empty-state">No students found. Add students to get started.</div>
                             </td>
                         </tr>
