@@ -4,6 +4,7 @@ from datetime import date
 from django.db.models import Count, Q
 import json
 import csv
+import openpyxl
 from django.http import HttpResponse
 
 
@@ -90,6 +91,37 @@ def export_csv(request):
         writer.writerow([student.name, total, present, percentage])
 
     return response
+
+
+def export_excel(request):
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="attendance.xlsx"'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Attendance Report"
+
+    # Header row
+    headers = ['Name', 'Total Days', 'Present Days', 'Percentage (%)']
+    ws.append(headers)
+
+    # Style the header
+    for cell in ws[1]:
+        cell.font = openpyxl.styles.Font(bold=True)
+
+    students = Student.objects.all()
+
+    for student in students:
+        total = Attendance.objects.filter(student=student).count()
+        present = Attendance.objects.filter(student=student, status=True).count()
+        percentage = int((present / total) * 100) if total > 0 else 0
+
+        ws.append([student.name, total, present, percentage])
+
+    wb.save(response)
+    return response
 from django.contrib import messages
 
 def add_student(request):
@@ -102,4 +134,14 @@ def add_student(request):
         else:
             messages.error(request, "Student name cannot be empty.")
 
+    return redirect('mark_attendance')
+
+def delete_student(request, student_id):
+    student = Student.objects.filter(id=student_id).first()
+    if student:
+        name = student.name
+        student.delete()
+        messages.success(request, f"Student '{name}' and all their attendance records were deleted.")
+    else:
+        messages.error(request, "Student not found.")
     return redirect('mark_attendance')
