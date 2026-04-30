@@ -1,31 +1,12 @@
-name: Django CI/CD
+name: Deploy to EC2
 
 on:
   push:
     branches: [develop]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Django check
-        run: python manage.py check
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Deploy to EC2
@@ -39,5 +20,5 @@ jobs:
             git pull origin develop
             source venv/bin/activate
             pip install -r requirements.txt
-            pkill -f runserver || true
-            nohup python manage.py runserver 0.0.0.0:8000 &
+            pkill -f gunicorn || true
+            nohup gunicorn --bind 0.0.0.0:8000 atend.wsgi:application > log.txt 2>&1 &
